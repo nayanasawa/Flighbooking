@@ -1,0 +1,318 @@
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import Select
+import time
+import datetime
+
+
+def is_valid_date(date_string):
+    current_date = datetime.datetime.now().date()
+    input_date = datetime.datetime.strptime(date_string, "%d/%m/%Y").date()
+    return input_date >= current_date
+
+
+# Dictionary mapping airport names to IATA codes for Indian airports
+indian_airports = {
+    "Delhi": "DEL",
+    "Mumbai": "BOM",
+    "Bengaluru": "BLR",
+    "Hyderabad": "HYD",
+    "Chennai": "MAA",
+    # Add more airports as needed
+}
+
+# Display the list of Indian airports for the user to choose from
+print("List of Indian Airports:")
+for index, airport in enumerate(indian_airports.keys(), 1):
+    print(f"{index}. {airport}")
+
+# Prompt the user to select an airport
+selected_index = int(input("Enter the number corresponding to the origin airport: "))
+selected_airport = list(indian_airports.keys())[selected_index - 1]
+origin = indian_airports[selected_airport]
+
+print(f"Selected origin airport: {selected_airport} ({origin})")
+
+# Hard-coded details
+destination = "BLR"
+date = "27/05/2024"
+return_date = "28/05/2024"
+trip_type = "One Way"
+adults = 2
+childs = 1
+infants = 0
+email = "nayan.asawa@nineleaps.com"
+first1_N = "Nayan"
+last1_N = "Asawa"
+first2_N = "Krishna"
+last2_N = "Vyas"
+fchild1 = "Madhav"
+lchild1 = "Asawa"
+phone = "7793992929"
+card1 = "371449635398431"
+c1name = "NAYAN ASAWA"
+cvv = "199"
+
+# Check if the departure date is valid
+if not is_valid_date(date):
+    print("Departure date should not be the past date")
+    exit()
+
+# Check if return date is greater than or equal to departure date
+if return_date:
+    departure_datetime = datetime.datetime.strptime(date, "%d/%m/%Y")
+    return_datetime = datetime.datetime.strptime(return_date, "%d/%m/%Y")
+    if return_datetime < departure_datetime:
+        print("Return date must be greater than or equal to departure date")
+        exit()
+
+# Chrome options to disable notifications
+chrome_options = webdriver.ChromeOptions()
+chrome_options.add_argument("--disable-notifications")
+
+# Create a WebDriver instance with configured options
+chrome_service = Service("/home/nineleaps/Downloads/chromedriver-linux64/chromedriver")
+driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
+driver.implicitly_wait(8)
+
+try:
+    # Accessing the website
+    driver.get("https://www.easemytrip.com/offers/no-convenience-fee.html")
+
+    # Selecting trip type
+    trip_type_elements = {
+        "One Way": "/html[1]/body[1]/form[1]/div[4]/div[1]/div[3]/div[1]/ul[1]/li[1]",
+        "Round Trip": "/html[1]/body[1]/form[1]/div[4]/div[1]/div[3]/div[1]/ul[1]/li[2]",
+        "Multi City": "/html[1]/body[1]/form[1]/div[4]/div[1]/div[3]/div[1]/ul[1]/li[3]"
+    }
+    li_element = driver.find_element(By.XPATH, trip_type_elements[trip_type])
+    li_element.click()
+    time.sleep(2)
+
+    # Maximizing window and handling final actions
+    driver.maximize_window()
+    time.sleep(3)
+
+    # Explicit wait for origin input field to be clickable
+    origin_input = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.ID, "a_FromSector_show"))
+    )
+
+    # Clear the input field and send keys to enter the origin
+    origin_input.clear()
+    origin_input.send_keys(origin)
+    time.sleep(3)  # Optional delay, you can remove this if not needed
+
+    # Wait for the airport option to be clickable in the dropdown
+    airport_option = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, f"//span[contains(text(),'{origin}')]"))
+    )
+
+    # Click on the airport option in the dropdown
+    airport_option.click()
+    time.sleep(3)  # Optional delay, you can remove this if not needed
+
+    # Similarly for destination
+    driver.find_element(By.ID, "tocity").click()
+    destination_input = driver.find_element(By.ID, "ToSector_show")
+    destination_input.clear()
+    destination_input.send_keys(destination)
+    time.sleep(3)
+    driver.find_element(By.XPATH, f"//span[contains(text(),'{destination}')]").click()
+    time.sleep(3)
+
+    # Enter departure date
+    departure_date_input = driver.find_element(By.ID, "ddate")
+    departure_date_input.click()
+    time.sleep(3)
+    driver.find_element(By.ID, date).click()
+    time.sleep(3)
+
+    # If round trip, enter return date
+    if trip_type == "Round Trip":
+        return_date_input = driver.find_element(By.ID, "rdate")
+        return_date_input.click()
+        time.sleep(2)
+        driver.find_element(By.ID, return_date).click()
+        time.sleep(2)
+
+    # Adjust number of passengers
+    traveller = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, '//*[@id="myFunction4"]'))
+    )
+    traveller.click()
+    time.sleep(3)  # Wait for any animations or subsequent UI changes
+
+    # For adults
+    while adults > 1:
+        adult = driver.find_element(By.CSS_SELECTOR, ".add.plus_box1")
+        adult.click()
+        time.sleep(1)
+        adults -= 1
+
+    # For Childs
+    while childs > 0:
+        child = driver.find_element(By.CSS_SELECTOR, ".add.plus_boxChd")
+        child.click()
+        time.sleep(1)
+        childs -= 1
+
+    # Search flights
+    click_search = driver.find_element(By.CSS_SELECTOR, ".srchBtnSe")
+    click_search.click()
+    time.sleep(4)
+
+    # Maximizing window and handling final actions
+    driver.maximize_window()
+    time.sleep(3)
+
+    # Find the button using CSS Selector and click it
+    final = driver.find_element(By.XPATH, '//*[@id="ResultDiv"]/div/div/div[4]/div[2]/div[1]/div[2]/div[6]/button')
+    final.click()
+    time.sleep(5)
+
+    # Scroll down after final action
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(2)
+
+    # Additional operation
+    yes = driver.find_element(By.XPATH, '//*[@id="divInsuranceTab"]/div[3]/div[1]/label')
+    yes.click()
+    time.sleep(2)
+
+    # For email
+    my = driver.find_element(By.XPATH, '//*[@id="txtEmailId"]')
+    my.send_keys(email)
+    time.sleep(2)
+
+    # For continue booking
+    book = driver.find_element(By.XPATH, '//*[@id="spnVerifyEmail"]')
+    book.click()
+    time.sleep(2)
+
+    # Adult1 first name
+    name1 = driver.find_element(By.CSS_SELECTOR, '#txtFNAdult0')
+    name1.send_keys(first1_N)
+    time.sleep(3)
+
+    # Last name
+    lname = driver.find_element(By.CSS_SELECTOR, '#txtLNAdult0')
+    lname.send_keys(last1_N)
+    time.sleep(3)
+
+    # title
+    title = driver.find_element(By.CSS_SELECTOR, '#titleAdult0')
+    title.click()
+    time.sleep(3)
+    option = driver.find_element(By.XPATH, "//select[@id='titleAdult0']/option[@value='Mr']")
+    option.click()
+    time.sleep(3)
+
+    # Adult 2 first name
+    if first2_N:
+        name2 = driver.find_element(By.CSS_SELECTOR, '#txtFNAdult1')
+        name2.send_keys(first2_N)
+        time.sleep(3)
+        option = driver.find_element(By.XPATH, "//select[@id='titleAdult1']/option[@value='Mr']")
+        option.click()
+        time.sleep(3)
+
+    # Adult last name
+    if last2_N:
+        Lname = driver.find_element(By.CSS_SELECTOR, '#txtLNAdult1')
+        Lname.send_keys(last2_N)
+        time.sleep(3)
+
+    # child
+    if fchild1:
+        child_first_name_input = WebDriverWait(driver, 10).until(
+            EC.visibility_of_element_located((By.CSS_SELECTOR, '#txtFNChild0'))
+        )
+        child_first_name_input.send_keys(fchild1)
+        time.sleep(3)
+
+        # Select title for the child using Select class
+        child_title_dropdown = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.ID, 'titleChild0'))
+        )
+        select = Select(child_title_dropdown)
+        select.select_by_value("MSTR")  # Correct value for "Master"
+        time.sleep(3)
+
+        # Child's last name
+        if lchild1:
+            childLL = driver.find_element(By.CSS_SELECTOR, '#txtLNChild0')
+            childLL.send_keys(lchild1)
+            time.sleep(3)
+
+    # phoneNUmber
+    phone1 = driver.find_element(By.CSS_SELECTOR, '#txtCPhone')
+    phone1.send_keys(phone)
+    time.sleep(3)
+
+    # submit
+    submit = driver.find_element(By.CSS_SELECTOR, '#spnTransaction')
+    submit.click()
+    time.sleep(5)
+
+    # Wait for the pop-up window to appear
+    popup = WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located((By.CLASS_NAME, "revw_rt_25"))
+    )
+
+    # Find the "Skip" button within the pop-up
+    skip_button = popup.find_element(By.XPATH, ".//a[@class='edit_btn' and text()='Skip']")
+
+    # Click the "Skip" button
+    skip_button.click()
+
+    time.sleep(2)  # Optional delay to observe the change
+
+    # trying skip
+    skip1 = driver.find_element(By.ID, 'skipPop')
+    skip1.click()
+    time.sleep(8)
+
+    # Wait until the input for the card number is visible and interactable
+    card_input = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.ID, "CC"))
+    )
+    card_input.send_keys(card1)
+    time.sleep(4)
+
+    # card name
+    cname = driver.find_element(By.ID, "CCN")
+    cname.send_keys(c1name)
+    time.sleep(4)
+
+    # for cvv
+    cvvv = driver.find_element(By.ID, "CCCVV")
+    cvvv.send_keys(cvv)
+    time.sleep(3)
+
+    # for month
+    dropdown = driver.find_element(By.ID, "CCMM")
+    select_object = Select(dropdown)
+    select_object.select_by_value("03")  # The value "03" corresponds to March
+    time.sleep(4)
+
+    # for year
+    dropdown = driver.find_element(By.ID, "CCYYYY")
+    select_object = Select(dropdown)
+    select_object.select_by_value("2028")
+    time.sleep(4)
+
+    # make payment
+    payment = driver.find_element(By.XPATH, '//*[@id="card"]/div[12]')
+    payment.click()
+
+    time.sleep(10)
+
+except Exception as e:
+    print(f"An error occurred: {e}")
+finally:
+    # Close the driver
+    driver.quit()
